@@ -83,7 +83,7 @@ bool imgFlag = false;
 var auth = FirebaseAuth.instance.currentUser;
 
 class _MyHomePageState extends State<MyHomePage> {
-  File? galleryFile;
+  File? galleryFile; // where is this used?
   final picker = ImagePicker();
   //calls each time the app is opened
   @override
@@ -120,9 +120,10 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  // locvalue is id, not name
   Future<List<Object?>> getComments(locValue) async {
     CollectionReference collectionRef = FirebaseFirestore.instance
-        .collection('comments')
+        .collection('locations')
         .doc(locValue)
         .collection("comments");
 
@@ -153,6 +154,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool _isNSFW = false;
 
+
+  // Builds comments based off of the return of a Future from getComments()
+  // The popup only shows likes and the user? It asks to show the actual text of the comment.
   Widget _buildPopupDialog(BuildContext context, locValue) {
     return AlertDialog(
       title: Text(locValue + " Comments"),
@@ -295,7 +299,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void _showPicker({
+  void _showPicker({ // Actually show the image picker to the user?
     required BuildContext context,
   }) {
     showModalBottomSheet(
@@ -342,6 +346,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  // the function that actually asks the user to get the image from their camera roll.
   Future getImage(
     ImageSource img,
   ) async {
@@ -364,7 +369,7 @@ class _MyHomePageState extends State<MyHomePage> {
         );
         galleryFile = File(pickedFile!.path);
         imgFlag = true;
-        setState(() {});
+        setState(() {}); // ??? empty set state? why?
       }
     } else {}
   }
@@ -374,7 +379,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildCommentDialog(BuildContext context, locValue) {
     // To store the selected tone
-
     return AlertDialog(
       title: const Text('Add a Comment'),
       content: Container(
@@ -468,7 +472,18 @@ class _MyHomePageState extends State<MyHomePage> {
                     postTime.add(Duration(hours: delayInHours));
                 // use FirebaseFirestore.instance to store the comment entry (data, user, feelvalue, posttime, visibletime)
                 // your codes begin here
+                var newComment = Map<String, dynamic>();
 
+                newComment['data'] = cmntController.text;
+                newComment['feelvalue'] = feelValue;
+                newComment['user'] = user?.email;
+                newComment['posttime'] = Timestamp.fromDate(postTime);
+                newComment['visibletime'] = Timestamp.fromDate(visibleTime);
+
+                FirebaseFirestore.instance.collection('locations')
+                                          .doc(locValue)
+                                          .collection("comments")
+                                          .add(newComment);
 
                 // end
                 setState(() {
