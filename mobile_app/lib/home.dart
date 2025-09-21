@@ -44,6 +44,7 @@ Future<List<String>> fetchCollegeList() async {
 
 class Home extends StatelessWidget {
   const Home({super.key});
+  
 
   // This widget is the root of your application.
   @override
@@ -125,14 +126,16 @@ class _MyHomePageState extends State<MyHomePage> {
     CollectionReference collectionRef = FirebaseFirestore.instance
         .collection('locations')
         .doc(locValue)
-        .collection("comments");
+        .collection('comments');
 
     QuerySnapshot querySnapshot = await collectionRef.get();
 
     DateTime now = DateTime.now();
+    print("before .map in get comments");
     final allData = querySnapshot.docs
         .map((doc) {
           var data = doc.data();
+          print('in getcomments $data');
           if (data != null) {
             // Explicitly cast data to Map<String, dynamic>
             Map<String, dynamic> dataMap = data as Map<String, dynamic>;
@@ -170,6 +173,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 if (snapshot.connectionState == ConnectionState.done) {
                   // If we got an error
                   if (snapshot.hasError) {
+                    print("SNAPSHOT ERROR DETECTED");
                     return Center(
                       child: Text(
                         '${snapshot.error} occurred',
@@ -179,6 +183,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
                     // if we got our data
                   } else if (snapshot.hasData) {
+                    print("snapshop has data");
+                    print(snapshot.data);
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -438,12 +444,11 @@ class _MyHomePageState extends State<MyHomePage> {
             // hint: use hasProfanity() plugin, then change true to profanity check
             // your codes begin here
             if (filter.hasProfanity(cmntController.text)){
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("Message contains profanity! Please refrain from using profanity."),
-                  duration: Duration(seconds: 5),
-                  backgroundColor: Colors.orange[400],
-                  )
+              Fluttertoast.showToast(
+                msg: "Message contains profanity! \nPlease refrain from using profanity.",
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.CENTER,
+                fontSize: 16.0
               );
             // end
             //SUICIDAL MESSAGES FILTER HERE
@@ -475,14 +480,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 var newComment = Map<String, dynamic>();
 
                 newComment['data'] = cmntController.text;
-                newComment['feelvalue'] = feelValue;
+                newComment['feel'] = feelValue;
                 newComment['user'] = user?.email;
-                newComment['posttime'] = Timestamp.fromDate(postTime);
-                newComment['visibletime'] = Timestamp.fromDate(visibleTime);
+                newComment['postTime'] = Timestamp.fromDate(postTime);
+                newComment['visibleTime'] = Timestamp.fromDate(visibleTime);
 
                 FirebaseFirestore.instance.collection('locations')
                                           .doc(locValue)
-                                          .collection("comments")
+                                          .collection('comments')
                                           .add(newComment);
 
                 // end
@@ -492,7 +497,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 });
                 Navigator.of(context).pop();
               } else {
-                // Handle case when no tone is selected (Maybe show a snackbar or alert)
+                  print("here");
+                  // Handle case when no tone is selected (Maybe show a snackbar or alert)
+                  Fluttertoast.showToast(
+                    msg: "Please select a tone.",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.CENTER,
+                    fontSize: 16.0
+                  );
               }
             }
           },
@@ -641,9 +653,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-        title: "Location",
-        home: Scaffold(
+    return Scaffold(
             backgroundColor: Colors.lightGreen[100],
             appBar: AppBar(
               centerTitle: true,
@@ -830,6 +840,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       ],
                     ),
                   ),
-                ]))));
+                ])));
   }
 }
