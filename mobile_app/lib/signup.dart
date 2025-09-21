@@ -81,11 +81,11 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                     controller: nameController,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      labelText: 'Email',
+                      labelText: 'Email', 
                     ),
                   ),
                 ),
-                Container(
+                Container( 
                   padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
                   child: TextField(
                     obscureText: true,
@@ -114,8 +114,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       child: const Text('Submit'),
                       onPressed: () async {
                         try {
-                          // your codes begin here, you can use createUserWithEmailAndPassword in FirebaseAuth.instance
-                          // final user =
+                          final user = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: nameController.text.trim(), password: passwordController.text.trim());
 
                           // end
                           if (user != null) {
@@ -136,14 +135,88 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                   builder: (context) => const Help()),
                             );
                           }
-                        } catch (e) {
-                          Fluttertoast.showToast(
-                            msg:
-                                "Please ensure your email is in the correct format (abc@123.com)",
-                            toastLength: Toast.LENGTH_SHORT,
-                            gravity: ToastGravity
-                                .BOTTOM, // Also possible "TOP" and "CENTER"
-                          );
+                        } 
+                        on FirebaseAuthException catch (e){
+                          if(!mounted){ // check if user is still on screen
+                            return;
+                          }
+                          if(e.code == "email-already-in-use"){
+                            // Fluttertoast.showToast(
+                            //   msg: "This email is already in use!",
+                            //   toastLength: Toast.LENGTH_LONG,
+                            //   gravity: ToastGravity.BOTTOM,
+                            // );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("This email is already in use!"),
+                                duration: Duration(seconds: 5),
+                                backgroundColor: Colors.redAccent[100]
+                              )
+                            );
+                            
+                            print(e);
+                          }
+                          else if(e.code == "invalid-email"){
+                            // Fluttertoast.showToast(
+                            //   msg: "This email is not valid.",
+                            //   toastLength: Toast.LENGTH_LONG,
+                            //   gravity: ToastGravity.BOTTOM
+                            // );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Invalid email formatting!"),
+                                duration: Duration(seconds: 5),
+                                backgroundColor: Colors.redAccent[100]
+                              )
+                            );
+                            print(e);
+                          }
+                          else if(e.code == "weak-password"){
+                            // Fluttertoast.showToast(
+                            //   msg: "Your password is too weak. Must have minimum length 6 characters with at least one uppercase and one number.",
+                            //   toastLength: Toast.LENGTH_LONG,
+                            //   gravity: ToastGravity.BOTTOM
+                            // );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Your password is too weak. Must have minimum length 6 characters with at least one uppercase and one number."),
+                                duration: Duration(seconds: 5),
+                                backgroundColor: Colors.redAccent[100]
+                              )
+                            );
+                            print(e);
+                          }
+                          else if(e.code == "invalid-operation"){
+                            // Fluttertoast.showToast(
+                            //   msg: "Firebase config error! Tell the dev to check Firebase auth setup!",
+                            //   toastLength: Toast.LENGTH_LONG,
+                            //   gravity: ToastGravity.BOTTOM
+                            // );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Firebase config error! Tell the dev to check Firebase auth setup!"),
+                                duration: Duration(seconds: 5),
+                                backgroundColor: Colors.redAccent[100]
+                              )
+                            );
+                            print(e);
+                          }
+                        }
+                        catch (e) {
+                          // Fluttertoast.showToast(
+                          //   msg:
+                          //       "Unknown error occured. panic.",
+                          //   toastLength: Toast.LENGTH_LONG,
+                          //   gravity: ToastGravity
+                          //       .BOTTOM, // Also possible "TOP" and "CENTER"
+                          // );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Unknown error occured. panic."),
+                                duration: Duration(seconds: 5),
+                                backgroundColor: Colors.redAccent[100]
+                              )
+                            );
                           print(e);
                         }
                       },

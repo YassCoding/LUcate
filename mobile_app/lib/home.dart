@@ -28,6 +28,7 @@ List<String> collegeList = [];
 String dropdownValue = '';
 //trying to fetch all the colleges names first and store in an array
 Future<List<String>> fetchCollegeList() async {
+  
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   QuerySnapshot querySnapshot = await firestore.collection('locations').get();
 
@@ -432,8 +433,14 @@ class _MyHomePageState extends State<MyHomePage> {
             //returns a msg "Please refrain from using profanity"(if profanity is present)
             // hint: use hasProfanity() plugin, then change true to profanity check
             // your codes begin here
-            if (true){
-  
+            if (filter.hasProfanity(cmntController.text)){
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("Message contains profanity! Please refrain from using profanity."),
+                  duration: Duration(seconds: 5),
+                  backgroundColor: Colors.orange[400],
+                  )
+              );
             // end
             //SUICIDAL MESSAGES FILTER HERE
             }
@@ -442,7 +449,15 @@ class _MyHomePageState extends State<MyHomePage> {
               if (selectedTone != null) {
                 String feelValue;
                 // your codes begin here
-
+                if(selectedTone == "Positive"){
+                  feelValue = 'g';
+                }
+                else if (selectedTone == "Negative"){
+                  feelValue = 'b';
+                }
+                else{
+                  feelValue = 'n';
+                }
 
                 // end
                 // Generating a random delay between 8 and 24 hours
@@ -522,7 +537,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _displayCurrentLocation() async {
     final location = await Geolocator.getCurrentPosition();
-    _add(location.latitude, location.longitude, 'Your Location', true, -1);
+    _add(location.latitude, location.longitude, 'curLoc', 'Your Location', true, -1);
 
     setState(() {
       _location = location;
@@ -541,7 +556,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void _add(double lat, double lng, String id, bool yourLoc, double feelValue) {
+  void _add(double lat, double lng, String id, String name, bool yourLoc, double feelValue) {
     String markerIdVal = id;
     final MarkerId markerId = MarkerId(markerIdVal);
 
@@ -573,15 +588,17 @@ class _MyHomePageState extends State<MyHomePage> {
         .get()
         .then((querySnapshot) {
       for (var doc in querySnapshot.docs) {
+        
         var data = doc.data() as Map<String, dynamic>;
         var location = data['location'] as List<dynamic>;
         var name = data['name'] as String;
+        var id = doc.id;
 
         //adds location for each "name" aka "building"
         double lat = location[0];
         double lng = location[1];
 
-        _add(lat, lng, name, false, -1);
+        _add(lat, lng, id, name, false, -1);
       }
     }).catchError((error) {
       print("Error getting documents: $error");

@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "474818731458",
-    "project_id": "test-102ff",
-    "storage_bucket": "test-102ff.appspot.com"
+    "project_number": "68239240009",
+    "project_id": "lucateluni",
+    "storage_bucket": "lucateluni.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:474818731458:android:62fc081676b6f5d9de4a5b",
+        "mobilesdk_app_id": "1:68239240009:android:b6d25de6e020f34d408898",
         "android_client_info": {
-          "package_name": "com.example.mobile_app"
+          "package_name": "com.yassCoding.LUcate"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCqjERKFwT8c-FINtCO1wBuQsJ66Wdgt5g"
+          "current_key": "AIzaSyAM1GoPvwkMFfVpgy0HQIno-bQQh0B2-WE"
         }
       ],
       "services": {

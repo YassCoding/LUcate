@@ -1,3 +1,5 @@
 {
-    "cmake.sourceDirectory": "${workspaceFolder}/ishansmain/ishansnavbar/mobile_app/linux"
+    "cmake.sourceDirectory": "${workspaceFolder}/ishansmain/ishansnavbar/mobile_app/linux",
+    "files.autoSave": "afterDelay",
+    "dart.flutterHotReloadOnSave": "all"
 }

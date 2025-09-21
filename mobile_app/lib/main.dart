@@ -125,7 +125,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                     controller: nameController,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      labelText: 'User Name',
+                      labelText: 'Email',
                     ),
                   ),
                 ),
@@ -180,7 +180,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                           email: nameController.text.trim(),
                           password: passwordController.text.trim(),
                         );
-
                         if (user != null) {
                           Navigator.push(
                             context,
@@ -194,12 +193,60 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                     'Authentication failed. Please try again.')),
                           );
                         }
-                      } catch (e) {
+                      } 
+                      on FirebaseAuthException catch (e){
+                          if(!mounted){ // check if user is still on screen
+                            return;
+                          }
+                          if(e.code == "user-not-found" || e.code == "wrong-password" || e.code == "INVALID_LOGIN_CREDENTIALS"){
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Email or password is incorrect!"),
+                                duration: Duration(seconds: 5),
+                                backgroundColor: Colors.redAccent[100]
+                              )
+                            );
+                            
+                            print(e);
+                          }
+                          else if(e.code == "user-disabled"){
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Your account has been disabled!"),
+                                duration: Duration(seconds: 5),
+                                backgroundColor: Colors.redAccent[100]
+                              )
+                            ); 
+                            print(e);
+                          }
+                          else if(e.code == "invalid-email"){
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Invalid email."),
+                                duration: Duration(seconds: 5),
+                                backgroundColor: Colors.redAccent[100]
+                              )
+                            );
+                            print(e);
+                          }
+                          else{
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Unknown FireBase error occured."),
+                                duration: Duration(seconds: 5),
+                                backgroundColor: Colors.redAccent[100]
+                              )
+                            );
+                            print(e);
+                          }
+                        }
+                      catch (e) {
                         print(e);
+                        print("unknown error");
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                               content:
-                                  Text('An error occurred. Please try again.')),
+                                  Text('An unknown error occurred. Please try again.')),
                         );
                       }
                     },
