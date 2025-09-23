@@ -58,7 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
     ]
   ];
   var _groupEntry = [false, false, false];
-  var _pubpriv = false;
+  var _pubpriv = "";
 
   Widget _buildPopupDialog(BuildContext context) {
     return AlertDialog(
@@ -83,6 +83,21 @@ class _MyHomePageState extends State<MyHomePage> {
               labelText: 'Description',
             ),
           ),
+          DropdownButton(
+            value: dropdownValue,
+            items: ["Public", "Private"]
+                .map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+            onChanged: (String? value) {
+              setState(() {
+                _pubpriv = value!;
+              });
+            },
+          ),
           SizedBox(height: 5),
         ],
       ),
@@ -91,7 +106,7 @@ class _MyHomePageState extends State<MyHomePage> {
           onPressed: () {
           // add the newly created group to the group list dropdown option (public private) auth!.email
           // your codes begin here
-
+          
 
 
           // end

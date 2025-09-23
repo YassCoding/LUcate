@@ -135,7 +135,6 @@ class _MyHomePageState extends State<MyHomePage> {
     final allData = querySnapshot.docs
         .map((doc) {
           var data = doc.data();
-          print('in getcomments $data');
           if (data != null) {
             // Explicitly cast data to Map<String, dynamic>
             Map<String, dynamic> dataMap = data as Map<String, dynamic>;
