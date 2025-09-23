@@ -45,7 +45,7 @@ class _MyHomePageState extends State<MyHomePage> {
   var _isPub = [];
   var _groupList = [];
 
-  var dropdownValString = "Select an Option";
+  var dropdownValString = "Public";
   var tempMap = Map<String, dynamic>();
 
   //calls each time the app is opened
@@ -76,12 +76,16 @@ class _MyHomePageState extends State<MyHomePage> {
     
     var db = FirebaseFirestore.instance;
     var userEmail = FirebaseAuth.instance.currentUser?.email;
-    
+
     List<Future<bool>> membershipChecks = groupList.map((group) async { // 
       var groupName = group[0];
-      final docRef = db.collection('groups').doc(groupName).collection('users').doc(userEmail);
-      final docSnapshot = await docRef.get();
-      return docSnapshot.exists;
+      final groupQ = await db.collection('groups').where("name", isEqualTo: groupName).limit(1).get();
+      if (groupQ.docs.isNotEmpty) {
+        final groupDocRef = groupQ.docs.first.reference;
+        final userDoc = await groupDocRef.collection('users').doc(userEmail).get();
+        return userDoc.exists;
+      }
+      return false;
     }).toList();
 
     List<bool> groupEntry = await Future.wait(membershipChecks);
@@ -104,106 +108,108 @@ class _MyHomePageState extends State<MyHomePage> {
     if(qs.docs.isNotEmpty){
       var gdoc = qs.docs.first.reference;
 
-      await gdoc.collection('users').add({
-        'email': FirebaseAuth.instance.currentUser?.email
-      });
+      await gdoc.collection('users').doc(FirebaseAuth.instance.currentUser!.email).set({
+      'email': FirebaseAuth.instance.currentUser!.email
+    });
     }
   }
   
 
   Widget _buildPopupDialog(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Group Creation'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          TextField(
-            controller: cmntController,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: 'Group Name',
+    return StatefulBuilder(builder: (context, setDialogueState){
+      return AlertDialog(
+        title: const Text('Group Creation'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            TextField(
+              controller: cmntController,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Group Name',
+              ),
             ),
-          ),
-          SizedBox(height: 5),
-          TextField(
-            maxLines: null,
-            controller: descController,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: 'Description',
+            SizedBox(height: 5),
+            TextField(
+              maxLines: null,
+              controller: descController,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Description',
+              ),
             ),
-          ),
-          DropdownButton(
-            value: dropdownValString,
-            hint: Text("Select a visibility"),
-            items: ["Public", "Private"]
-                .map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-            onChanged: (String? value) {
-              dropdownValString = value!;
-              setState(() {
-                dropdownValString;
-              });
-            },
-          ),
-          SizedBox(height: 5),
-        ],
-      ),
-      actions: <Widget>[
-        ElevatedButton(
-          onPressed: () {
-          // add the newly created group to the group list dropdown option (public private) auth!.email
-          // your codes begin here
-          // create firebase (groupname, public/private, creator email, description, collection of users)
-          // use set state? to update page?
-          // close popup?
-          tempMap['name'] = cmntController.text;
-          tempMap['description'] = descController.text;
-          tempMap['creator'] = FirebaseAuth.instance.currentUser?.email;
-          tempMap['visibility'] = dropdownValString;
-          FirebaseFirestore.instance.collection('groups').add(tempMap).then((doc) => {
-            doc.collection('users').add({
-              'email': FirebaseAuth.instance.currentUser?.email
-            })
-          });
-
-          setState(() {
-            _groupList.add([
-              tempMap['name'],
-              tempMap['visibility'],
-              tempMap['creator'],
-              tempMap['description'],
-            ]);
-            _isPub.add(tempMap['visibility'] == "Public");
-            _groupEntry.add(true);
-          });
-
-          cmntController.clear();
-          descController.clear();
-          Navigator.of(context).pop();
-          // end
-          },
-          style:
-              ElevatedButton.styleFrom(backgroundColor: Colors.indigo.shade300),
-          child: const Text('Create'),
+            DropdownButton(
+              value: dropdownValString,
+              hint: Text("Select a visibility"),
+              items: ["Public", "Private"]
+                  .map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+              onChanged: (String? value) {
+                setDialogueState(() {
+                  dropdownValString = value!;
+                });
+              },
+            ),
+            SizedBox(height: 5),
+          ],
         ),
-        ElevatedButton(
-          onPressed: () {
+        actions: <Widget>[
+          ElevatedButton(
+            onPressed: ()  {
+            // add the newly created group to the group list dropdown option (public private) auth!.email
+            // your codes begin here
+            // create firebase (groupname, public/private, creator email, description, collection of users)
+            // use set state? to update page?
+            // close popup?
+            tempMap['name'] = cmntController.text;
+            tempMap['description'] = descController.text;
+            tempMap['creator'] = FirebaseAuth.instance.currentUser?.email;
+            tempMap['visibility'] = dropdownValString;
+            FirebaseFirestore.instance.collection('groups').add(tempMap).then((doc) async {
+              await doc.collection('users').doc(FirebaseAuth.instance.currentUser!.email).set({
+                'email': FirebaseAuth.instance.currentUser!.email
+              });
+            });
+
+            setState(() {
+              _groupList.add([
+                tempMap['name'],
+                tempMap['visibility'],
+                tempMap['creator'],
+                tempMap['description'],
+              ]);
+              _isPub.add(tempMap['visibility'] == "Public");
+              _groupEntry.add(true);
+            });
+
             cmntController.clear();
             descController.clear();
             Navigator.of(context).pop();
-          },
-          style:
-              ElevatedButton.styleFrom(backgroundColor: Colors.indigo.shade300),
-          child: const Text('Close'),
-        ),
-      ],
-    );
+            // end
+            },
+            style:
+                ElevatedButton.styleFrom(backgroundColor: Colors.indigo.shade300),
+            child: const Text('Create'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              cmntController.clear();
+              descController.clear();
+              Navigator.of(context).pop();
+            },
+            style:
+                ElevatedButton.styleFrom(backgroundColor: Colors.indigo.shade300),
+            child: const Text('Close'),
+          ),
+        ],
+      );
+    });
+    
   }
 
   Widget _buildGroupDialog(BuildContext context, index) {
