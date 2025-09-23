@@ -2,12 +2,16 @@ import 'dart:math';
 
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:mobile_app/home.dart';
 import 'package:mobile_app/main.dart';
 import 'package:image_picker/image_picker.dart';
+
+
 
 class Groups extends StatelessWidget {
   const Groups({super.key});
@@ -36,29 +40,61 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   TextEditingController cmntController = TextEditingController();
   TextEditingController descController = TextEditingController();
-  //group examples
-  var _groupList = [
-    [
-      "First group :)", 
-      "Public", 
-      "leh3003@wellcoach.org",
-      "my first group, seeing how it works"
-    ],
-    [
-      "Bookstores!!",
-      "Public",
-      "mat202@wellcoach.org",
-      "A group for all who love bookstores!!"
-    ],
-    [
-      "Libraries enjoyers",
-      "Public",
-      "lem111@wellcoach.org",
-      "I like books. Do you?"
-    ]
-  ];
-  var _groupEntry = [false, false, false];
-  var _pubpriv = "";
+  
+  var _groupEntry = [];
+  var _isPub = [];
+  var _groupList = [];
+
+  var dropdownValString = "Select an Option";
+  var tempMap = Map<String, dynamic>();
+
+  //calls each time the app is opened
+  @override
+  void initState() {
+    super.initState();
+    _getGroupData();
+  }
+
+  Future<void> _getGroupData() async {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    QuerySnapshot querySnapshot = await firestore.collection('groups').get();
+    var groupList = [];
+    var name = "";
+    QueryDocumentSnapshot doc;
+    _groupEntry.clear();
+    _isPub.clear();
+    _groupList.clear();
+
+    for (var doc in querySnapshot.docs) {
+      groupList.add([
+        doc['name'],
+        doc['visibility'],
+        doc['creator'],
+        doc['description']
+      ]);
+    }
+    
+    var db = FirebaseFirestore.instance;
+    var userEmail = FirebaseAuth.instance.currentUser?.email;
+    List<Future<bool>> membershipChecks = groupList.map((group) async { // 
+      var groupName = group[0];
+      final docRef = db.collection('groups').doc(groupName).collection('users').doc(userEmail);
+      final docSnapshot = await docRef.get();
+      return docSnapshot.exists;
+    }).toList();
+
+    List<bool> groupEntry = await Future.wait(membershipChecks);
+    List<bool> pubpriv = groupList.map((group)  { // 
+      return group[2] == "Public";
+    }).toList();
+
+    setState(() {
+      _groupList = groupList;
+      _groupEntry = groupEntry;
+      _isPub = pubpriv;
+    });
+  }
+  
 
   Widget _buildPopupDialog(BuildContext context) {
     return AlertDialog(
@@ -84,7 +120,8 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
           DropdownButton(
-            value: dropdownValue,
+            value: dropdownValString,
+            hint: Text("Select a visibility"),
             items: ["Public", "Private"]
                 .map<DropdownMenuItem<String>>((String value) {
               return DropdownMenuItem<String>(
@@ -93,8 +130,9 @@ class _MyHomePageState extends State<MyHomePage> {
               );
             }).toList(),
             onChanged: (String? value) {
+              dropdownValString = value!;
               setState(() {
-                _pubpriv = value!;
+                dropdownValString;
               });
             },
           ),
@@ -106,9 +144,33 @@ class _MyHomePageState extends State<MyHomePage> {
           onPressed: () {
           // add the newly created group to the group list dropdown option (public private) auth!.email
           // your codes begin here
-          
+          // create firebase (groupname, public/private, creator email, description, collection of users)
+          // use set state? to update page?
+          // close popup?
+          tempMap['name'] = cmntController.text;
+          tempMap['description'] = descController.text;
+          tempMap['creator'] = FirebaseAuth.instance.currentUser?.email;
+          tempMap['visibility'] = dropdownValString == "Public";
+          FirebaseFirestore.instance.collection('groups').add(tempMap).then((doc) => {
+            doc.collection('users').add({
+              'email': FirebaseAuth.instance.currentUser?.email
+            })
+          });
 
+          setState(() {
+            _groupList.add([
+              tempMap['name'],
+              tempMap['visibility'],
+              tempMap['creator'],
+              tempMap['description'],
+            ]);
+            _isPub.add(tempMap['visibility'] == "Public");
+            _groupEntry.add(true);
+          });
 
+          cmntController.clear();
+          descController.clear();
+          Navigator.of(context).pop();
           // end
           },
           style:
@@ -145,8 +207,9 @@ class _MyHomePageState extends State<MyHomePage> {
           onPressed: () {
             // show corresponding group description after click
             // your codes begin here
-
-
+            // Join group by adding to collection of users in group
+            // update state to update page?
+            // close?
             // end
           },
           style:
@@ -156,8 +219,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ElevatedButton(
           onPressed: () {
             // your codes begin here
-
-
+            Navigator.of(context).pop();
             // end
           },
           style:
