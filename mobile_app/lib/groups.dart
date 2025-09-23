@@ -76,6 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
     
     var db = FirebaseFirestore.instance;
     var userEmail = FirebaseAuth.instance.currentUser?.email;
+    
     List<Future<bool>> membershipChecks = groupList.map((group) async { // 
       var groupName = group[0];
       final docRef = db.collection('groups').doc(groupName).collection('users').doc(userEmail);
@@ -85,7 +86,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     List<bool> groupEntry = await Future.wait(membershipChecks);
     List<bool> pubpriv = groupList.map((group)  { // 
-      return group[2] == "Public";
+      return group[1] == "Public";
     }).toList();
 
     setState(() {
@@ -93,6 +94,20 @@ class _MyHomePageState extends State<MyHomePage> {
       _groupEntry = groupEntry;
       _isPub = pubpriv;
     });
+  }
+
+  Future<void> addCurrUserToGroup(String name) async{
+    var fs = FirebaseFirestore.instance;
+
+    var qs = await fs.collection('groups').where("name", isEqualTo: name).limit(1).get();
+
+    if(qs.docs.isNotEmpty){
+      var gdoc = qs.docs.first.reference;
+
+      await gdoc.collection('users').add({
+        'email': FirebaseAuth.instance.currentUser?.email
+      });
+    }
   }
   
 
@@ -150,7 +165,7 @@ class _MyHomePageState extends State<MyHomePage> {
           tempMap['name'] = cmntController.text;
           tempMap['description'] = descController.text;
           tempMap['creator'] = FirebaseAuth.instance.currentUser?.email;
-          tempMap['visibility'] = dropdownValString == "Public";
+          tempMap['visibility'] = dropdownValString;
           FirebaseFirestore.instance.collection('groups').add(tempMap).then((doc) => {
             doc.collection('users').add({
               'email': FirebaseAuth.instance.currentUser?.email
@@ -210,6 +225,11 @@ class _MyHomePageState extends State<MyHomePage> {
             // Join group by adding to collection of users in group
             // update state to update page?
             // close?
+            addCurrUserToGroup(_groupList[index][0]);
+            setState(() {
+              _groupEntry[index] = true;
+            });
+            Navigator.of(context).pop();
             // end
           },
           style:
